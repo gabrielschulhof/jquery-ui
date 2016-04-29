@@ -102,7 +102,8 @@ return $.widget( "ui.controlgroup", {
 			// We assume everything is in the middle to start because we can't determine
 			// first / last elements until all enhancments are done.
 			if ( that[ "_" + widget + "Options" ] ) {
-				options = that[ "_" + widget + "Options" ]( "middle" );
+				options = that[ "_" + widget + "Options" ]( "middle",
+					that.options.direction === "vertical" );
 			}
 
 			// Find instances of this widget inside controlgroup and init them

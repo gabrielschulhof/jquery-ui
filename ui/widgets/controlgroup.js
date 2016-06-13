@@ -31,6 +31,7 @@
 	}
 }( function( $ ) {
 var controlgroupCornerRegex = /ui-corner-([a-z]){2,6}/g;
+var classSplitRegex = /\S+/g;
 
 return $.widget( "ui.controlgroup", {
 	version: "@VERSION",
@@ -117,15 +118,17 @@ return $.widget( "ui.controlgroup", {
 				.each( function() {
 					var element = $( this );
 					var instance = element[ widget ]( "instance" );
+					var instanceOptions = $.widget.extend( {}, options );
 
 					// If the button is the child of a spinner ignore it
 					if ( widget === "button" && element.parent( ".ui-spinner" ).length ) {
 						return;
 					}
 					if ( instance ) {
-						options.classes = that._resolveClassesValues( options.classes, instance );
+						instanceOptions.classes =
+							that._resolveClassesValues( instanceOptions.classes, instance );
 					}
-					element[ widget ]( options );
+					element[ widget ]( instanceOptions );
 
 					// Store an instance of the controlgroup to be able to reference
 					// from the outermost element for changing options and refresh
@@ -219,9 +222,24 @@ return $.widget( "ui.controlgroup", {
 
 	_resolveClassesValues: function( classes, instance ) {
 		$.each( classes, function( key ) {
-			var current = instance.options.classes[ key ] || "";
-			current = current.replace( controlgroupCornerRegex, "" ).trim();
-			classes[ key ] = ( current + " " + classes[ key ] ).replace( /\s+/g, " " );
+
+			// Convert the class key value from the instance options to an array of class names
+			// after filtering out any corners-related classes, and concatenate it with an array
+			// created from the class key value of the classes option that was passed in. Sort the
+			// result to make it easy to remove duplicates.
+			var classList = ( ( instance.options.classes[ key ] || "" )
+				.replace( controlgroupCornerRegex, "" )
+				.match( classSplitRegex ) || [] )
+				.concat( classes[ key ].match( classSplitRegex ) || [] )
+				.sort();
+
+			// Remove duplicates, join into a space-separated string, and assign back to classes.
+			classes[ key ] = $.map( classList, function( value, index ) {
+				if ( value && value !==
+					( ( index + 1 < classList.length ) ? classList[ index + 1 ] : "" ) ) {
+					return value;
+				}
+			} ).join( "" );
 		} );
 		return classes;
 	},
